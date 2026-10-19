@@ -1,75 +1,59 @@
-const skills = [
+﻿const steps = [
   {
     number: "01",
-    title: "Interface Design",
-    description: "Creating clear and easy-to-use screens.",
-    items: ["UI design", "Wireframing", "Prototyping", "User flows"],
+    title: "Discover & understand",
+    description: "I start by understanding the project’s goals, user needs, and design requirements to create a clear direction.",
   },
   {
     number: "02",
-    title: "Visual Design",
-    description: "Making layouts feel balanced and consistent.",
-    items: ["Typography", "Color combinations", "Visual hierarchy", "Spacing"],
+    title: "Plan & wireframe",
+    description: "I organize ideas, create user flows, and develop wireframes to build a clear and user-friendly structure.",
   },
   {
     number: "03",
-    title: "Collaboration",
-    description: "Working with others to improve design ideas.",
-    items: ["Teamwork", "Communication", "Receiving feedback", "Attention to detail"],
+    title: "Design & prototype",
+    description: "I bring ideas to life using Figma, creating modern interfaces and interactive prototypes that focus on usability and visual appeal.",
   },
   {
     number: "04",
-    title: "Frontend Basics",
-    description: "Turning design ideas into simple web pages.",
-    items: ["HTML", "CSS", "React basics", "Responsive layouts"],
+    title: "Refine & improve",
+    description: "I improve my designs through feedback, refining details and ensuring consistency to create better user experiences.",
   },
 ];
 
 export default function Skills() {
   return (
-    <section className="skills-showcase section" id="skills">
-      <h2 className="heading shimmer-title scroll-reveal">Skills</h2>
-
-      <p className="skills-intro scroll-reveal reveal-up">
-        The tools and strengths I use to design simple, thoughtful, and usable experiences.
-      </p>
-
-      <div className="skills-marquee scroll-reveal reveal-up">
-        <div className="skills-track">
-          <div className="skills-group">
-            {skills.map((skill) => (
-              <article className="skill-landscape-card" key={skill.number}>
-                <span className="skill-no">{skill.number}</span>
-
-                <h3>{skill.title}</h3>
-                <p>{skill.description}</p>
-
-                <ul className="skill-tags">
-                  {skill.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </article>
+    <section className="skills-showcase section" id="skills" aria-labelledby="process-title">
+      <div className="process-grid">
+        <div className="process-intro scroll-reveal reveal-up">
+          <p className="process-eyebrow">Working process</p>
+          <h2 id="process-title">Turning ideas into meaningful digital experiences.</h2>
+        </div>
+        <aside className="process-tools scroll-reveal reveal-up" aria-labelledby="tools-title">
+          <h3 id="tools-title">Tools I use:</h3>
+          <ul>
+            {["Figma", "Canva", "Mobbin"].map((tool) => (
+              <li key={tool}>{tool}</li>
             ))}
-          </div>
-
-          {/* duplicate for seamless infinite rolling */}
-          <div className="skills-group" aria-hidden="true">
-            {skills.map((skill) => (
-              <article className="skill-landscape-card" key={`copy-${skill.number}`}>
-                <span className="skill-no">{skill.number}</span>
-
-                <h3>{skill.title}</h3>
-                <p>{skill.description}</p>
-
-                <ul className="skill-tags">
-                  {skill.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
+          </ul>
+        </aside>
+        {steps.map((step, index) => (
+          <article
+            className="process-step scroll-reveal reveal-up"
+            key={step.number}
+            style={{ "--process-delay": `${(index + 1) * 90}ms` }}
+          >
+            <span className="process-number" aria-hidden="true">{step.number}</span>
+            <div className="process-copy">
+              <h3>{step.title}</h3>
+              <p>{step.description}</p>
+            </div>
+          </article>
+        ))}
+        <div className="process-contact scroll-reveal reveal-up">
+          <a className="process-contact-link" href="#contact">
+            Contact me <span aria-hidden="true">→</span>
+          </a>
         </div>
       </div>
     </section>
