@@ -5,7 +5,6 @@ import Layout from "./components/Layout.jsx";
 import Home from "./pages/Home.jsx";
 import About from "./pages/About.jsx";
 import Skills from "./pages/Skills.jsx";
-import Projects from "./pages/Projects.jsx";
 import Contact from "./pages/Contact.jsx";
 
 export default function App() {
@@ -161,7 +160,6 @@ export default function App() {
           <Home />
           <About />
           <Skills />
-          <Projects />
           <Contact />
         </Layout>
       </div>

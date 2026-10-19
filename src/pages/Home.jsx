@@ -17,7 +17,7 @@ export default function Home() {
             I'm Imari Calado, An aspiring UI/UX designer passionate about creating clean, modern, and user-friendly interfaces, with a growing expertise in Figma and a creative approach to digital design.
           </p>
           <div className="actions">
-            <a href="#projects" className="btn solid">View my works</a>
+            <a href="#skills" className="btn solid">View my skills</a>
             <a href="#contact" className="btn ghost">Let's Connect</a>
           </div>
         </div>
