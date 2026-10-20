@@ -122,27 +122,9 @@ export default function Layout({ children }) {
 }
 
 function ViewportSection({ children }) {
-  const viewportRef = useRef(null)
-  const contentRef = useRef(null)
-
-  useLayoutEffect(() => {
-    const updateScale = () => {
-      const viewport = viewportRef.current
-      const content = contentRef.current
-      const height = content.offsetHeight
-      const scale = height > 0 ? Math.min(1, viewport.clientHeight / height) : 1
-      content.style.setProperty('--section-scale', String(scale))
-    }
-    const observer = new ResizeObserver(updateScale)
-    observer.observe(viewportRef.current)
-    observer.observe(contentRef.current)
-    updateScale()
-    return () => observer.disconnect()
-  }, [])
-
   return (
-    <div className="section-viewport" ref={viewportRef}>
-      <div className="section-fit" ref={contentRef}>{children}</div>
+    <div className="section-viewport">
+      <div className="section-fit">{children}</div>
     </div>
   )
 }
