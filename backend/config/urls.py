@@ -20,6 +20,7 @@ from api import views
 
 urlpatterns = [
     path('api/contact/csrf/', views.contact_csrf),
+    path('api/contact/verification/', views.contact_verification),
     path('api/contact/', views.contact_message),
     path('admin/', admin.site.urls),
 ]

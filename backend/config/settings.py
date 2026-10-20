@@ -13,9 +13,11 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 from pathlib import Path
 import os
 from django.core.management.utils import get_random_secret_key
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,9 +27,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') or get_random_secret_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin for origin in os.environ.get(
     'CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173' if DEBUG else ''
 ).split(',') if origin]
@@ -133,7 +135,9 @@ MAILERS = {
 }
 
 # Configure SMTP on the backend to enable email notifications.
-CONTACT_EMAIL_NOTIFICATIONS = bool(os.environ.get('SMTP_HOST'))
+CONTACT_EMAIL_NOTIFICATIONS = all(os.environ.get(key) for key in (
+    'SMTP_HOST', 'SMTP_USERNAME', 'SMTP_PASSWORD',
+))
 CONTACT_RECIPIENT_EMAIL = os.environ.get('CONTACT_RECIPIENT_EMAIL', 'imariscalado@gmail.com')
 DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', os.environ.get('SMTP_USERNAME', 'webmaster@localhost'))
 if CONTACT_EMAIL_NOTIFICATIONS:

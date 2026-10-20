@@ -1,6 +1,6 @@
 
 import { useEffect, useLayoutEffect, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import ContactMessage from "./pages/ContactMessage.jsx";
 
 import Layout from "./components/Layout.jsx";
@@ -10,14 +10,30 @@ import Skills from "./pages/Skills.jsx";
 import Contact from "./pages/Contact.jsx";
 
 export default function App() {
-  return <BrowserRouter><Routes>
-    <Route path="/contact" element={<ContactMessage />} />
-    <Route path="*" element={<Portfolio />} />
-  </Routes></BrowserRouter>;
+  return <BrowserRouter><SiteRoutes /></BrowserRouter>;
 }
 
-function Portfolio() {
-  const [isLoading, setIsLoading] = useState(true);
+function SiteRoutes() {
+  const { pathname } = useLocation();
+  const [isLoading, setIsLoading] = useState(() => pathname !== '/contact');
+
+  useEffect(() => {
+    if (!isLoading) return;
+    if (pathname === '/contact') {
+      setIsLoading(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setIsLoading(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [isLoading, pathname]);
+
+  return <div key={pathname} className="route-transition"><Routes>
+    <Route path="/contact" element={<ContactMessage />} />
+    <Route path="*" element={<Portfolio isLoading={isLoading} />} />
+  </Routes></div>;
+}
+
+function Portfolio({ isLoading }) {
 
   useLayoutEffect(() => {
     if ("scrollRestoration" in window.history) {
@@ -37,14 +53,6 @@ function Portfolio() {
         window.history.scrollRestoration = "auto";
       }
     };
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setIsLoading(false);
-    }, 900);
-
-    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {

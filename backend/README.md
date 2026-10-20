@@ -1,41 +1,83 @@
-# Contact messages
+﻿# Portfolio contact backend
 
-The form posts to Django and saves messages in **Admin → Contact messages**.
-Visitors do not need an email app. SMTP notifications are optional; a failed
-notification does not discard a saved message.
+The static portfolio, email link, and PDF download do not need Django. Django handles
+email verification, sending contact messages to Gmail, and saving successful messages
+in Admin > Contact messages.
 
-From the backend directory in PowerShell:
+## Local setup (PowerShell)
 
 ```powershell
+cd backend
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+# Only copy if you do not have a .env yet:
+Copy-Item .env.example .env
 .\venv\Scripts\python.exe manage.py migrate
-.\venv\Scripts\python.exe manage.py createsuperuser
 .\venv\Scripts\python.exe manage.py runserver
 ```
 
-Run the frontend with `npm.cmd run dev`. Vite proxies `/api` to port 8000.
-Open `http://127.0.0.1:8000/admin/` to read messages with your admin account.
+In another terminal, run `npm.cmd run dev` from `frontend`. Vite proxies `/api` to
+Django at `http://127.0.0.1:8000`.
 
-For email notifications, set the following environment variables **in the same
-backend terminal before starting Django** (these are examples, not credentials):
+## Gmail credentials
+
+Settings load `backend/.env` automatically. This file is ignored by Git.
+Use `imariscalado@gmail.com` as `SMTP_USERNAME`, `SMTP_FROM_EMAIL`, and
+`CONTACT_RECIPIENT_EMAIL`. Add your **Google App Password** as `SMTP_PASSWORD`.
+Do not use your normal Gmail password or put credentials in frontend files.
+
+Enable Google 2-Step Verification and create an App Password:
+https://support.google.com/mail/answer/185833?hl=en
+
+The example uses `smtp.gmail.com`, port 587, and TLS. The sender must be an account
+you control. Google account or organization policies can restrict App Passwords.
+
+## Contact flow
+
+1. The visitor enters an email and clicks **Send verification code**.
+2. Django emails a random six-digit code to that address. Codes expire in 10 minutes,
+   are stored as hashes, allow five guesses, and can be used for one message.
+3. The visitor enters the code, completes the form, and clicks **Send message**.
+4. Django verifies the code and matching email, sends the message to your Gmail,
+   and saves it for the admin inbox. SMTP failures return an error and allow retry.
+
+The Gmail notification contains the visitor's name, verified email, topic, and message.
+`Reply-To` points to the verified visitor. The actual From address is your configured
+SMTP account; the backend cannot send as somebody else's Gmail account.
+
+Email format or SMTP acceptance cannot prove an account exists. Receiving and entering
+the code proves access to that inbox at that time. A nonexistent or inaccessible address
+cannot complete verification and cannot submit a contact message. Delivery may still go
+to spam, and verification does not establish the visitor's real-world identity.
+
+Code requests are limited to one per minute per IP and email; successful submissions
+are limited to one per 30 seconds per IP. For a multi-worker production deployment,
+configure a shared Django cache (e.g. Redis), a persistent `DJANGO_SECRET_KEY`,
+`DJANGO_DEBUG=false`, allowed hosts, trusted CSRF origins, HTTPS, and a production
+database. Codes remain in the database across server restarts; periodically remove
+expired `ContactVerification` rows. Route `/api/` to Django on the frontend origin.
+
+Optional admin access:
 
 ```powershell
-$env:SMTP_HOST = 'smtp.gmail.com'
-$env:SMTP_PORT = '587'
-$env:SMTP_USERNAME = 'your-sender@gmail.com'
-$env:SMTP_PASSWORD = '<your-provider-SMTP-credential>'
-$env:SMTP_FROM_EMAIL = 'your-sender@gmail.com'
-$env:CONTACT_RECIPIENT_EMAIL = 'imariscalado@gmail.com'
+.\venv\Scripts\python.exe manage.py createsuperuser
 ```
 
-`SMTP_USE_TLS` defaults to `true`; `SMTP_USE_SSL` defaults to `false`.
-Keep credentials on the backend; never put them in frontend code or commit them.
-Settings read environment variables, not `.env` files.
-SMTP configuration follows [Django's mailer settings](https://docs.djangoproject.com/en/6.1/ref/settings/#mailers).
+Open `http://127.0.0.1:8000/admin/` to read saved messages.
 
-Set a persistent `DJANGO_SECRET_KEY` environment variable for deployed servers;
-local development generates a temporary key when it is unset.
+## Resume and email links
 
-For production, route `/api/` to Django on the frontend's origin (Vite's proxy
-only runs in development), configure the deployment's allowed hosts, trusted
-CSRF origins, database, and SMTP environment. The default rate limit uses a
-process-local cache; use a shared cache when running multiple server workers.
+Replace `frontend/public/resume.pdf` with your finished resume, keeping the filename.
+The **Download Resume** link downloads this file directly. The current file is clearly
+marked as a dummy example and contains placeholder qualifications.
+
+The footer email uses `mailto:imariscalado@gmail.com`, opening the visitor's configured
+email composer. Whether this opens Gmail depends on their browser/mail-handler settings.
+
+## Checks
+
+```powershell
+.\venv\Scripts\python.exe manage.py check
+.\venv\Scripts\python.exe manage.py test api
+```
+
+Tests use Django's in-memory email backend and do not send real emails.

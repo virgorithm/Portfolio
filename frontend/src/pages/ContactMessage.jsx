@@ -5,9 +5,13 @@ import './ContactMessage.css'
 
 export default function ContactMessage() {
   const [notice, setNotice] = useState('')
+  const [messageSent, setMessageSent] = useState(false)
   const [sending, setSending] = useState(false)
   const [topic, setTopic] = useState('')
-  const [topicError, setTopicError] = useState(false)
+  const [errors, setErrors] = useState({})
+  const [verification, setVerification] = useState(null)
+  const [requestingCode, setRequestingCode] = useState(false)
+  const requesting = useRef(false)
   const topicTrigger = useRef(null)
   const submitting = useRef(false)
   useLayoutEffect(() => {
@@ -18,37 +22,76 @@ export default function ContactMessage() {
     return () => { document.title = previousTitle }
   }, [])
 
+  async function requestCode(event) {
+    setMessageSent(false)
+    setNotice('')
+    const form = event.currentTarget.form
+    const emailField = form.elements.namedItem('email')
+    const error = fieldError(emailField)
+    if (error) {
+      setErrors((previous) => ({ ...previous, email: error }))
+      emailField.focus()
+      return
+    }
+    if (requesting.current) return
+    requesting.current = true
+    setRequestingCode(true)
+    setNotice('')
+    const email = emailField.value.trim().toLowerCase()
+    try {
+      const result = await postContact('/api/contact/verification/', { email })
+      if (emailField.value.trim().toLowerCase() === email) {
+        setVerification({ id: result.verificationId, email })
+        setNotice(result.message)
+      }
+    } catch (error) {
+      setNotice(error instanceof TypeError ? 'Could not connect. Please try again.' : error.message)
+    } finally {
+      requesting.current = false
+      setRequestingCode(false)
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
-    if (!topic) {
-      setTopicError(true)
-      topicTrigger.current?.focus()
+    setMessageSent(false)
+    setNotice('')
+    const form = event.currentTarget
+    const nextErrors = {}
+    for (const name of ['name', 'email', 'message']) {
+      const error = fieldError(form.elements.namedItem(name))
+      if (error) nextErrors[name] = error
+    }
+    if (!topic) nextErrors.topic = 'Please select a topic.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length) {
+      form.querySelector(`#hello-${['name', 'email', 'topic', 'message'].find((name) => nextErrors[name])}`)?.focus()
+      return
+    }
+    if (!verification || verification.email !== form.elements.namedItem('email').value.trim().toLowerCase()) {
+      setNotice('Please request a verification code for your email address first.')
+      form.querySelector('.hello-verify-button')?.focus()
+      return
+    }
+    const codeField = form.elements.namedItem('verificationCode')
+    if (!codeField || !codeField.validity.valid) {
+      setErrors((previous) => ({ ...previous, verificationCode: 'Please enter the 6-digit code.' }))
+      codeField?.focus()
       return
     }
     if (submitting.current) return
     submitting.current = true
-    const form = event.currentTarget
     const values = Object.fromEntries(new FormData(form))
+    values.verificationId = verification.id
     setSending(true)
     setNotice('')
     try {
-      const csrfResponse = await fetch('/api/contact/csrf/', { credentials: 'same-origin' })
-      if (!csrfResponse.ok) throw new Error('Could not connect. Please try again.')
-      const { csrfToken } = await csrfResponse.json()
-      const response = await fetch('/api/contact/', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-        body: JSON.stringify(values),
-      })
-      const result = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        const details = Object.values(result.fields ?? {}).flat().join(' ')
-        throw new Error(details || result.error || 'Could not send your message. Please try again.')
-      }
+      const result = await postContact('/api/contact/', values)
       form.reset()
       setTopic('')
+      setVerification(null)
       setNotice(result.message)
+      setMessageSent(true)
     } catch (error) {
       setNotice(error instanceof TypeError ? 'Could not connect. Please try again.' : error.message)
     } finally {
@@ -71,26 +114,44 @@ export default function ContactMessage() {
           <p>Have a project, an internship opportunity, or a question about my work? Kindly send a message, and<br className="hello-desktop-break" /> I will respond at my earliest convenience.</p>
         </div>
         <div className="hello-content">
-          <form className="hello-form hello-enter" onSubmit={handleSubmit} aria-busy={sending}>
+          <form className="hello-form hello-enter" noValidate onSubmit={handleSubmit} aria-busy={sending}
+            onInput={(event) => {
+              const field = event.target
+              if (messageSent) { setMessageSent(false); setNotice('') }
+              if (field.name === 'email') setVerification(null)
+              if (errors[field.name]) setErrors((previous) => ({ ...previous, [field.name]: fieldError(field) }))
+            }}>
             <h2>Send me a message</h2>
             <div className="hello-field">
               <label htmlFor="hello-name">Your name</label>
-              <input id="hello-name" name="name" placeholder="ex: Imari Calado" autoComplete="name" required maxLength={100} pattern=".*\S.*" />
+              <ValidatedInput error={errors.name} id="hello-name" name="name" placeholder="ex: Imari Calado" autoComplete="name" required maxLength={100} pattern=".*\S.*" />
             </div>
             <div className="hello-field">
               <label htmlFor="hello-email">Email address</label>
-              <input id="hello-email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required maxLength={254} />
+              <ValidatedInput error={errors.email} id="hello-email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required maxLength={254}
+                action={<button className="hello-verify-button" type="button" onClick={requestCode} disabled={requestingCode || sending}
+                  aria-label={requestingCode ? 'Sending verification code' : verification ? 'Resend verification code' : 'Send verification code'}
+                  title={verification ? 'Resend verification code' : 'Send verification code'}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="14" rx="3" /><path d="m3 7 9 6 9-6" />
+                  </svg>
+                  <span>{requestingCode ? 'Sending…' : verification ? 'Resend code' : 'Send code'}</span>
+                </button>} />
+              <p className="hello-verification-help">Verify your email so I can reply to you. Your code expires in 10 minutes.</p>
             </div>
+            {verification && <div className="hello-field">
+              <label htmlFor="hello-code">Email verification code</label>
+              <ValidatedInput error={errors.verificationCode} id="hello-code" name="verificationCode" placeholder="6-digit code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required />
+            </div>}
             <div className="hello-field">
               <label id="hello-topic-label" htmlFor="hello-topic">What is this about?</label>
-              <TopicSelect value={topic} onChange={(value) => { setTopic(value); setTopicError(false) }} invalid={topicError} triggerRef={topicTrigger} />
-              {topicError && <p id="hello-topic-error" className="hello-topic-error" role="alert">Please select a topic.</p>}
+              <TopicSelect value={topic} onChange={(value) => { setTopic(value); setErrors((previous) => ({ ...previous, topic: '' })) }} invalid={Boolean(errors.topic)} triggerRef={topicTrigger} />
             </div>
             <div className="hello-field">
               <label htmlFor="hello-message">Message</label>
-              <textarea id="hello-message" name="message" rows={5} placeholder="Tell me a little about it…" required maxLength={3000} />
+              <ValidatedInput multiline error={errors.message} id="hello-message" name="message" rows={5} placeholder="Tell me a little about it…" required maxLength={3000} />
             </div>
-            <button className="hello-send" type="submit" disabled={sending}>
+            <button className="hello-send" type="submit" disabled={sending || requestingCode}>
               {sending ? 'Sending…' : 'Send message'}
               <span aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -98,7 +159,12 @@ export default function ContactMessage() {
                 </svg>
               </span>
             </button>
-            <p className="hello-notice" role="status">{notice}</p>
+            {notice && (messageSent ? <div className="hello-success" role="status">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" />
+              </svg>
+              <p>{notice}</p>
+            </div> : <p className="hello-notice" role="status">{notice}</p>)}
           </form>
           <aside className="hello-details hello-enter" aria-label="Contact details">
             <Link className="contact-signature" to="/#contact" aria-label="Back to portfolio" title="Back to portfolio">
@@ -121,6 +187,47 @@ export default function ContactMessage() {
 }
 
 const topics = ['Project collaboration', 'Internship opportunity', 'Question about my work', 'Just saying hello']
+
+async function postContact(url, values) {
+  const csrfResponse = await fetch('/api/contact/csrf/', { credentials: 'same-origin' })
+  if (!csrfResponse.ok) throw new Error('Could not connect. Please try again.')
+  const { csrfToken } = await csrfResponse.json()
+  const response = await fetch(url, {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+    body: JSON.stringify(values),
+  })
+  const result = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    const details = Object.values(result.fields ?? {}).flat().join(' ')
+    throw new Error(details || result.error || 'Could not send your message. Please try again.')
+  }
+  return result
+}
+
+function fieldError(field) {
+  if (!field.value.trim()) return 'Please fill out this field.'
+  if (field.validity.typeMismatch) return 'Please enter a valid email address.'
+  return field.validity.valid ? '' : field.validationMessage
+}
+
+function InlineError({ id, children }) {
+  return <span id={id} className="hello-input-error" role="alert">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" /><path d="M12 7v6m0 4h.01" />
+    </svg>
+    <span>{children}</span>
+  </span>
+}
+
+function ValidatedInput({ error, multiline, action, ...props }) {
+  const Control = multiline ? 'textarea' : 'input'
+  return <div className={`hello-input-wrap${error ? ' has-error' : ''}${action ? ' has-action' : ''}`}>
+    <Control {...props} aria-invalid={Boolean(error)} aria-describedby={error ? `${props.id}-error` : undefined} />
+    {action}
+    {error && <InlineError id={`${props.id}-error`}>{error}</InlineError>}
+  </div>
+}
 
 function TopicSelect({ value, onChange, invalid, triggerRef }) {
   const [open, setOpen] = useState(false)
@@ -178,7 +285,7 @@ function TopicSelect({ value, onChange, invalid, triggerRef }) {
         aria-activedescendant={open ? `hello-topic-option-${active}` : undefined}
         onClick={() => { setActive(Math.max(0, topics.indexOf(value))); setOpen(!open) }}
         onKeyDown={handleKeyDown} onBlur={() => setOpen(false)}>
-        {value || 'Select a topic'}
+        {invalid ? <InlineError id="hello-topic-error">Please select a topic.</InlineError> : value || 'Select a topic'}
         <svg className="hello-select-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
       </button>
       {open && <ul id="hello-topic-options" className="hello-topic-options" role="listbox" aria-labelledby="hello-topic-label">

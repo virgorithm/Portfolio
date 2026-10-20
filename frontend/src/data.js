@@ -10,7 +10,7 @@ export const skills = [
 export const contact = {
   email: 'imariscalado@gmail.com',
   phone: '+63 909 355 8721',
-  resume: null,
+  resume: '/resume.pdf',
   location: 'Philippines',
   links: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/feed/' },
