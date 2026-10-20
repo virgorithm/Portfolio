@@ -13,8 +13,8 @@ export const contact = {
   resume: null,
   location: 'Philippines',
   links: [
-    { label: 'LinkedIn', href: null },
-    { label: 'Instagram', href: null },
-    { label: 'Facebook', href: null },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/feed/' },
+    { label: 'Instagram', href: 'https://www.instagram.com/_imxrisc/' },
+    { label: 'Facebook', href: 'https://www.facebook.com/' },
   ],
 }
