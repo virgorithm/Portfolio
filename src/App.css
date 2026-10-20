@@ -1,10 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400&display=swap');
 
 :root {
-  --site-bg: linear-gradient(180deg, #100219 0%, #281032 48%, #4a1d55 100%);
-  --about-bg: var(--site-bg);
-  --bg-top: #100219;
-  --bg-bottom: #4a1d55;
+  --site-bg:
+    radial-gradient(ellipse at 8% 12%, rgba(122, 61, 130, 0.22), transparent 52%),
+    radial-gradient(ellipse at 96% 42%, rgba(232, 196, 204, 0.05), transparent 48%),
+    radial-gradient(ellipse at 55% 100%, rgba(122, 61, 130, 0.16), transparent 58%),
+    linear-gradient(140deg, #0b0211 0%, #170a20 42%, #26102f 76%, #32133c 100%);
+  --about-bg: linear-gradient(155deg, #12061a 0%, #220d2c 56%, #32133c 100%);
+  --bg-top: #0b0211;
+  --bg-bottom: #32133c;
   --pink: #e8c4cc;
   --text: #f5eaf0;
   --line: rgba(232, 196, 204, 0.35);
