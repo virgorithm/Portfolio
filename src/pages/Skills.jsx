@@ -27,7 +27,7 @@ export default function Skills() {
       <div className="process-grid">
         <div className="process-intro scroll-reveal reveal-up">
           <p className="process-eyebrow">Working process</p>
-          <h2 id="process-title">Turning ideas into meaningful digital experiences.</h2>
+          <h2 id="process-title" className="text-shimmer">Turning ideas into meaningful digital experiences.</h2>
         </div>
         <aside className="process-tools scroll-reveal reveal-up" aria-labelledby="tools-title">
           <h3 id="tools-title">Tools I use:</h3>

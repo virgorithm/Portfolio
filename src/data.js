@@ -8,11 +8,13 @@ export const skills = [
 ]
 
 export const contact = {
-  email: 'hello@example.com',
+  email: 'imariscalado@gmail.com',
+  phone: '+63 909 355 8721',
+  resume: null,
   location: 'Philippines',
   links: [
-    { label: 'Figma', href: '#' },
-    { label: 'LinkedIn', href: '#' },
-    { label: 'Instagram', href: '#' },
+    { label: 'LinkedIn', href: null },
+    { label: 'Instagram', href: null },
+    { label: 'Facebook', href: null },
   ],
 }

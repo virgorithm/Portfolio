@@ -16,16 +16,18 @@ export default function About() {
           <img src="/front-pic.png" alt="Portrait of Imari" />
         </div>
 
-        <div className="about-text scroll-reveal reveal-right">
-          <p>
-            Passionate about turning creative ideas into clean, functional, and visually engaging designs using Figma.
-          </p>
-        </div>
+        <div className="about-details">
+          <div className="about-text scroll-reveal reveal-right">
+            <p>
+              Passionate about turning creative ideas into clean, functional, and visually engaging designs using Figma.
+            </p>
+          </div>
 
-        <div className="about-role scroll-reveal reveal-right">
-          <strong>UI/UX</strong>
-          <strong>DESIGNER</strong>
-          <span>Figma - Wireframing - Prototyping</span>
+          <div className="about-role scroll-reveal reveal-right">
+            <strong className="text-shimmer">UI/UX</strong>
+            <strong className="text-shimmer">DESIGNER</strong>
+            <span>Figma - Wireframing - Prototyping</span>
+          </div>
         </div>
       </div>
     </section>
