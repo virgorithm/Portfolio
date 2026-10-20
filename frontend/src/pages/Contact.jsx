@@ -1,5 +1,7 @@
 ﻿import { contact } from '../data.js'
 
+import { Link } from 'react-router-dom'
+
 export default function Contact() {
   return (
     <section className="contact-page section" id="contact" aria-labelledby="contact-title">
@@ -16,14 +18,14 @@ export default function Contact() {
           message, and I will respond at my earliest convenience.
         </p>
         <div className="contact-actions">
-          <a className="contact-primary" href={`mailto:${contact.email}`}>
+          <Link className="contact-primary" to="/contact">
             Contact me
             <span className="contact-arrow" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14m-6-6 6 6-6 6" />
               </svg>
             </span>
-          </a>
+          </Link>
           {contact.resume ? (
             <a className="contact-resume" href={contact.resume} download>
               <DownloadIcon /> Download Resume

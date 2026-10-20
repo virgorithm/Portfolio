@@ -1,5 +1,7 @@
 
 import { useEffect, useLayoutEffect, useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import ContactMessage from "./pages/ContactMessage.jsx";
 
 import Layout from "./components/Layout.jsx";
 import Home from "./pages/Home.jsx";
@@ -8,6 +10,13 @@ import Skills from "./pages/Skills.jsx";
 import Contact from "./pages/Contact.jsx";
 
 export default function App() {
+  return <BrowserRouter><Routes>
+    <Route path="/contact" element={<ContactMessage />} />
+    <Route path="*" element={<Portfolio />} />
+  </Routes></BrowserRouter>;
+}
+
+function Portfolio() {
   const [isLoading, setIsLoading] = useState(true);
 
   useLayoutEffect(() => {
@@ -15,17 +24,15 @@ export default function App() {
       window.history.scrollRestoration = "manual";
     }
 
-    if (window.location.hash) {
-      window.history.replaceState(
-        null,
-        "",
-        `${window.location.pathname}${window.location.search}`
-      );
-    }
-
-    window.scrollTo(0, 0);
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(window.location.hash.slice(1));
+      const section = target?.closest('.section-viewport') ?? target;
+      const navHeight = document.querySelector('.nav')?.getBoundingClientRect().height ?? 0;
+      window.scrollTo({ top: section ? section.getBoundingClientRect().top + window.scrollY - navHeight : 0, behavior: 'instant' });
+    });
 
     return () => {
+      window.cancelAnimationFrame(frame);
       if ("scrollRestoration" in window.history) {
         window.history.scrollRestoration = "auto";
       }
@@ -35,7 +42,7 @@ export default function App() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setIsLoading(false);
-    }, 3000);
+    }, 900);
 
     return () => window.clearTimeout(timer);
   }, []);
