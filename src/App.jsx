@@ -87,8 +87,10 @@ export default function App() {
       const scrollY = window.scrollY;
       const nav = document.querySelector(".nav");
       const navHeight = nav ? nav.getBoundingClientRect().height : 0;
-      const start = homeSection.offsetTop + homeSection.offsetHeight * 0.16;
-      const end = aboutSection.offsetTop - navHeight - 24;
+      const homeFrame = homeSection.closest('.section-viewport') ?? homeSection;
+      const aboutFrame = aboutSection.closest('.section-viewport') ?? aboutSection;
+      const start = homeFrame.getBoundingClientRect().top + scrollY + homeSection.getBoundingClientRect().height * 0.16;
+      const end = aboutFrame.getBoundingClientRect().top + scrollY - navHeight - 24;
       const rawProgress = (scrollY - start) / Math.max(end - start, 1);
       const progress = Math.min(Math.max(rawProgress, 0), 1);
       const isActive = rawProgress > 0 && rawProgress < 1;

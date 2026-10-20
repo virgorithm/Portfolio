@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { Children, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const links = [
   { to: '#home', label: 'Home' },
@@ -11,6 +11,17 @@ export default function Layout({ children }) {
   const [activeSection, setActiveSection] = useState('#home')
   const animationFrame = useRef(0)
   const headerRef = useRef(null)
+  const pageRef = useRef(null)
+
+  useLayoutEffect(() => {
+    const updateHeaderHeight = () => {
+      pageRef.current?.style.setProperty('--nav-height', `${headerRef.current.getBoundingClientRect().height}px`)
+    }
+    updateHeaderHeight()
+    const observer = new ResizeObserver(updateHeaderHeight)
+    observer.observe(headerRef.current)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     let scrollFrame = 0
@@ -19,7 +30,7 @@ export default function Layout({ children }) {
       const marker = (headerRef.current?.getBoundingClientRect().height ?? 0) + 100
       let current = '#home'
       for (const link of links) {
-        if (document.querySelector(link.to)?.getBoundingClientRect().top <= marker) {
+        if (document.querySelector(link.to)?.closest('.section-viewport')?.getBoundingClientRect().top <= marker) {
           current = link.to
         }
       }
@@ -66,7 +77,8 @@ export default function Layout({ children }) {
 
     const navHeight = headerRef.current?.getBoundingClientRect().height ?? 0
     const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
-    const destination = targetId === '#home' ? 0 : target.getBoundingClientRect().top + window.scrollY - navHeight - 16
+    const sectionFrame = target.closest('.section-viewport') ?? target
+    const destination = targetId === '#home' ? 0 : sectionFrame.getBoundingClientRect().top + window.scrollY - navHeight
     const top = Math.min(Math.max(destination, 0), maxScroll)
     if (window.location.hash !== targetId) window.history.pushState(null, '', targetId)
 
@@ -89,7 +101,7 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="page" onClick={handlePageClick}>
+    <div className="page" ref={pageRef} onClick={handlePageClick}>
       <header className="nav" ref={headerRef}>
         <a href="#home" className="brand">
           <img src="/logo.png" alt="Imari Calado" />
@@ -102,7 +114,35 @@ export default function Layout({ children }) {
           ))}
         </nav>
       </header>
-      <div className="page-transition">{children}</div>
+      <div className="page-transition">
+        {Children.map(children, (child) => <ViewportSection>{child}</ViewportSection>)}
+      </div>
+    </div>
+  )
+}
+
+function ViewportSection({ children }) {
+  const viewportRef = useRef(null)
+  const contentRef = useRef(null)
+
+  useLayoutEffect(() => {
+    const updateScale = () => {
+      const viewport = viewportRef.current
+      const content = contentRef.current
+      const height = content.offsetHeight
+      const scale = height > 0 ? Math.min(1, viewport.clientHeight / height) : 1
+      content.style.setProperty('--section-scale', String(scale))
+    }
+    const observer = new ResizeObserver(updateScale)
+    observer.observe(viewportRef.current)
+    observer.observe(contentRef.current)
+    updateScale()
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div className="section-viewport" ref={viewportRef}>
+      <div className="section-fit" ref={contentRef}>{children}</div>
     </div>
   )
 }
